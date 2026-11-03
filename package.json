@@ -1,0 +1,14 @@
+{
+  "name": "talentflow-scheduling",
+  "version": "0.1.0",
+  "description": "AI interview scheduling for TalentFlow: slot engine, candidate self-booking, reminders, and MCP tools for ChatGPT and Claude.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.js",
+    "mcp": "node --disable-warning=ExperimentalWarning src/mcp-stdio.js",
+    "seed": "node --disable-warning=ExperimentalWarning src/seed.js --reset",
+    "test": "node --disable-warning=ExperimentalWarning --test \"test/*.test.js\""
+  }
+}

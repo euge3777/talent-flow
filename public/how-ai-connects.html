@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How TalentFlow connects to AI assistants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    main { max-width: 1080px; }
+    .figure-wrap { border-top: 1px solid var(--hairline); padding-top: 24px; }
+    svg.diagram { width: 100%; height: auto; display: block; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .caption { color: var(--mist); font-size: 13px; margin-top: 12px; max-width: 70ch; }
+    .steps { margin: 0; padding-left: 20px; }
+    .steps li { margin-bottom: 10px; max-width: 72ch; }
+    pre.msg { background: var(--wash); border-radius: 14px; padding: 14px 16px; font-size: 12.5px; color: var(--ink-soft); overflow-x: auto; white-space: pre; }
+    .section.full { grid-template-columns: 1fr; }
+    .back { display: inline-block; margin: 20px 0 0 24px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <a class="back" href="/#/connect">Back to AI assistants</a>
+  <main>
+    <section class="statement">
+      <h1>ChatGPT and Claude reach TalentFlow through one MCP server.</h1>
+      <p>MCP (Model Context Protocol) is the open standard both assistants use to call outside tools. TalentFlow publishes 8 scheduling tools; the assistant decides when to call them, and TalentFlow decides what is allowed.</p>
+    </section>
+
+    <section class="section full">
+      <div class="label">The pieces<small>Top to bottom: where you type, how the message travels, and what runs inside TalentFlow.</small></div>
+      <div class="figure-wrap">
+        <svg class="diagram" viewBox="0 0 1000 720" role="img" aria-label="Architecture: assistants connect over HTTPS or stdio to the TalentFlow MCP layer, which uses the same scheduler as the web app">
+          <defs>
+            <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5e6b80"/></marker>
+          </defs>
+          <g font-size="12" fill="#13294b">
+            <!-- Row 1: assistants -->
+            <rect x="40" y="28" width="290" height="70" rx="12" fill="#fff" stroke="#c9d1dc"/>
+            <text x="56" y="56" font-weight="600" font-size="14">ChatGPT (web)</text>
+            <text x="56" y="80" fill="#5e6b80">LLM + MCP client in the cloud</text>
+            <rect x="355" y="28" width="290" height="70" rx="12" fill="#fff" stroke="#c9d1dc"/>
+            <text x="371" y="56" font-weight="600" font-size="14">Claude.ai (web)</text>
+            <text x="371" y="80" fill="#5e6b80">LLM + MCP client in the cloud</text>
+            <rect x="670" y="28" width="290" height="70" rx="12" fill="#fff" stroke="#c9d1dc"/>
+            <text x="686" y="56" font-weight="600" font-size="14">Claude Desktop</text>
+            <text x="686" y="80" fill="#5e6b80">LLM in the cloud, client on your Mac</text>
+
+            <!-- Row 2: transport -->
+            <rect x="40" y="170" width="605" height="56" rx="12" fill="#f5f7fa" stroke="#c9d1dc"/>
+            <text x="56" y="194" font-weight="600">HTTPS over the internet</text>
+            <text x="56" y="214" fill="#5e6b80">Needs a public URL: a tunnel (cloudflared) to localhost:4300</text>
+            <rect x="670" y="170" width="290" height="56" rx="12" fill="#f5f7fa" stroke="#c9d1dc"/>
+            <text x="686" y="194" font-weight="600">stdio, no network</text>
+            <text x="686" y="214" fill="#5e6b80">Claude starts a local process</text>
+
+            <!-- Row 3: entry points -->
+            <rect x="40" y="270" width="605" height="56" rx="12" fill="#fff" stroke="#13294b"/>
+            <text x="56" y="294" font-weight="600">POST /mcp   src/server.js</text>
+            <text x="56" y="314" fill="#5e6b80">Authorization: Bearer token, Mcp-Session-Id header</text>
+            <rect x="670" y="270" width="290" height="56" rx="12" fill="#fff" stroke="#13294b"/>
+            <text x="686" y="294" font-weight="600">src/mcp-stdio.js</text>
+            <text x="686" y="314" fill="#5e6b80">Token from TALENTFLOW_TOKEN</text>
+
+            <!-- Row 4: MCP session (the accent) -->
+            <rect x="40" y="370" width="920" height="92" rx="14" fill="#fdf3d6" stroke="#13294b" stroke-width="1.5"/>
+            <text x="56" y="398" font-weight="600" font-size="14">McpSession   src/mcp.js   (the AI layer)</text>
+            <text x="56" y="422" fill="#2b4166">Token → TalentFlow user. Role checks: HMs can move their interviews, only recruiters send links.</text>
+            <text x="56" y="444" fill="#2b4166">tools/list: 8 tools with JSON Schemas. Write tools return a preview until called with confirm: true.</text>
+
+            <!-- Row 5: scheduler + web app -->
+            <rect x="40" y="506" width="640" height="70" rx="12" fill="#fff" stroke="#c9d1dc"/>
+            <text x="56" y="534" font-weight="600" font-size="14">Scheduler   src/scheduler.js</text>
+            <text x="56" y="558" fill="#5e6b80">Every business rule: slots, links, holds, booking, changes</text>
+            <rect x="720" y="506" width="240" height="70" rx="12" fill="#fff" stroke="#c9d1dc"/>
+            <text x="736" y="534" font-weight="600">Web app + candidate</text>
+            <text x="736" y="558" fill="#5e6b80">Same rules, via REST</text>
+
+            <!-- Row 6: data -->
+            <rect x="40" y="636" width="200" height="60" rx="12" fill="#f5f7fa" stroke="#c9d1dc"/>
+            <text x="56" y="662" font-weight="600">SQLite</text>
+            <text x="56" y="682" fill="#5e6b80">data/talentflow.db</text>
+            <rect x="260" y="636" width="220" height="60" rx="12" fill="#f5f7fa" stroke="#c9d1dc"/>
+            <text x="276" y="662" font-weight="600">Calendar provider</text>
+            <text x="276" y="682" fill="#5e6b80">mock; Google/M365 next</text>
+            <rect x="500" y="636" width="220" height="60" rx="12" fill="#f5f7fa" stroke="#c9d1dc"/>
+            <text x="516" y="662" font-weight="600">Outbox</text>
+            <text x="516" y="682" fill="#5e6b80">emails, invites, Slack</text>
+            <rect x="740" y="636" width="220" height="60" rx="12" fill="#f5f7fa" stroke="#c9d1dc"/>
+            <text x="756" y="662" font-weight="600">Audit log</text>
+            <text x="756" y="682" fill="#5e6b80">source: mcp:&lt;client&gt;</text>
+          </g>
+          <g fill="none" stroke="#5e6b80" stroke-width="1.3">
+            <path d="M185 98V168" marker-end="url(#a)"/>
+            <path d="M500 98V168" marker-end="url(#a)"/>
+            <path d="M815 98V168" marker-end="url(#a)"/>
+            <path d="M342 226V268" marker-end="url(#a)"/>
+            <path d="M815 226V268" marker-end="url(#a)"/>
+            <path d="M342 326V368" marker-end="url(#a)"/>
+            <path d="M815 326V368" marker-end="url(#a)"/>
+            <path d="M360 462V504" marker-end="url(#a)"/>
+            <path d="M720 541H682" marker-end="url(#a)"/>
+            <path d="M140 576V634" marker-end="url(#a)"/>
+            <path d="M370 576V634" marker-end="url(#a)"/>
+            <path d="M610 576V634" marker-end="url(#a)"/>
+            <path d="M660 576V606H850V634" marker-end="url(#a)"/>
+          </g>
+          <g font-size="11.5" fill="#5e6b80">
+            <text x="352" y="252">JSON-RPC</text>
+            <text x="825" y="252">JSON-RPC lines</text>
+            <text x="370" y="488">plain function calls</text>
+          </g>
+        </svg>
+        <p class="caption">The yellow layer is the only part built for AI. Everything under it is the same code the web app uses, so the assistant can never do something the product wouldn't let a person do.</p>
+      </div>
+    </section>
+
+    <section class="section full">
+      <div class="label">One request<small>What happens when a recruiter types into Claude or ChatGPT.</small></div>
+      <div class="figure-wrap">
+        <svg class="diagram" viewBox="0 0 1000 760" role="img" aria-label="Sequence: the assistant looks up the candidate, gets a preview, asks the recruiter, then sends after confirmation">
+          <defs>
+            <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5e6b80"/></marker>
+            <marker id="bh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#13294b"/></marker>
+          </defs>
+          <g font-size="13" font-weight="600" fill="#13294b" text-anchor="middle">
+            <rect x="30" y="10" width="160" height="40" rx="20" fill="#fff" stroke="#c9d1dc"/><text x="110" y="35">Recruiter</text>
+            <rect x="280" y="10" width="180" height="40" rx="20" fill="#fff" stroke="#c9d1dc"/><text x="370" y="35">AI assistant</text>
+            <rect x="540" y="10" width="180" height="40" rx="20" fill="#fff" stroke="#c9d1dc"/><text x="630" y="35">TalentFlow MCP</text>
+            <rect x="800" y="10" width="180" height="40" rx="20" fill="#fff" stroke="#c9d1dc"/><text x="890" y="35">Scheduler + data</text>
+          </g>
+          <g stroke="#e6eaf0" stroke-width="1.3" stroke-dasharray="3 4">
+            <line x1="110" x2="110" y1="50" y2="740"/><line x1="370" x2="370" y1="50" y2="740"/>
+            <line x1="630" x2="630" y1="50" y2="740"/><line x1="890" x2="890" y1="50" y2="740"/>
+          </g>
+          <rect x="300" y="70" width="410" height="44" rx="10" fill="#f5f7fa" stroke="#c9d1dc"/>
+          <text x="505" y="88" font-size="11.5" fill="#13294b" text-anchor="middle">Once per connection: initialize,</text>
+          <text x="505" y="104" font-size="11.5" fill="#13294b" text-anchor="middle">then tools/list (8 tools + instructions)</text>
+
+          <g font-size="12" text-anchor="middle" fill="#13294b">
+            <text x="240" y="150">"HR screen for Leo, mornings PT"</text>
+            <text x="500" y="190">tools/call list_applications</text>
+            <text x="760" y="230">check role, search</text>
+            <text x="500" y="270" fill="#5e6b80">app_leo, stage: applied</text>
+            <text x="500" y="310">send_scheduling_link (no confirm)</text>
+            <text x="760" y="350">find free slots, read-only</text>
+            <text x="500" y="390" fill="#5e6b80">Preview: 6 times + email, unsent</text>
+            <text x="240" y="430" fill="#5e6b80">"Send Leo these 6 times?"</text>
+            <text x="240" y="470" font-weight="600">"Yes"</text>
+            <text x="500" y="510">send_scheduling_link confirm: true</text>
+            <text x="760" y="550">re-check, create link</text>
+            <text x="760" y="590">email to outbox, audit log</text>
+            <text x="500" y="630" fill="#5e6b80">Sent, link expires in 72 h</text>
+            <text x="240" y="670" fill="#5e6b80">"Done. Leo can pick a time."</text>
+          </g>
+          <g fill="none" stroke-width="1.3">
+            <path d="M110 160H368" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M370 200H628" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 240H888" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 280H372" stroke="#5e6b80" stroke-dasharray="4 3" marker-end="url(#b)"/>
+            <path d="M370 320H628" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 360H888" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 400H372" stroke="#5e6b80" stroke-dasharray="4 3" marker-end="url(#b)"/>
+            <path d="M370 440H112" stroke="#5e6b80" stroke-dasharray="4 3" marker-end="url(#b)"/>
+            <path d="M110 480H368" stroke="#13294b" stroke-width="2.2" marker-end="url(#bh)"/>
+            <path d="M370 520H628" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 560H888" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 600H888" stroke="#5e6b80" marker-end="url(#b)"/>
+            <path d="M630 640H372" stroke="#5e6b80" stroke-dasharray="4 3" marker-end="url(#b)"/>
+            <path d="M370 680H112" stroke="#5e6b80" stroke-dasharray="4 3" marker-end="url(#b)"/>
+          </g>
+          <circle cx="110" cy="480" r="7" fill="#f5c84c" stroke="#13294b" stroke-width="1.3"/>
+        </svg>
+        <p class="caption">Solid arrows are requests, dashed arrows are replies. The sun marks the only step a person has to take: nothing is sent until the recruiter says yes.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">Step by step</div>
+      <ol class="steps">
+        <li><strong>Connect once.</strong> In Claude Desktop you add TalentFlow to its config file; Claude then starts <code>node src/mcp-stdio.js</code> on your Mac. For ChatGPT or Claude.ai you add the server's public HTTPS address plus your token as a connector.</li>
+        <li><strong>Handshake.</strong> The assistant sends <code>initialize</code> (TalentFlow records the client's name, e.g. claude-ai, for the audit log) and then <code>tools/list</code>. TalentFlow answers with the 8 tools, their input schemas, safety hints such as <code>readOnlyHint</code>, and usage instructions.</li>
+        <li><strong>The model chooses.</strong> When you type a request, the language model reads the tool descriptions and decides which tool to call and with what arguments. TalentFlow never sees your whole chat, only the tool calls.</li>
+        <li><strong>TalentFlow checks.</strong> Each <code>tools/call</code> carries your token. McpSession turns it into your TalentFlow user and applies the same role rules as the web app.</li>
+        <li><strong>Preview, then confirm.</strong> A write tool called without <code>confirm: true</code> only returns a preview. The assistant shows it to you, and only after you agree does it call again with <code>confirm: true</code>.</li>
+        <li><strong>Same rules, same record.</strong> The Scheduler does the real work and writes to the same database, calendars and outbox as the web app. Every action is logged with the source <code>mcp:&lt;client&gt;</code>.</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <div class="label">What travels on the wire<small>JSON-RPC 2.0. Shortened.</small></div>
+      <div>
+        <p class="muted small">The assistant calls a tool:</p>
+<pre class="msg">POST /mcp
+Authorization: Bearer tf_riya_…
+Mcp-Session-Id: 0be2c184-…
+
+{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{
+  "name":"send_scheduling_link",
+  "arguments":{"application_id":"app_leo","interview_type":"hr_screen",
+               "when":"mornings PT, not Friday"}}}</pre>
+        <p class="muted small" style="margin-top:14px">TalentFlow replies with text for the model and structured data for cards:</p>
+<pre class="msg">{"jsonrpc":"2.0","id":5,"result":{
+  "content":[{"type":"text","text":"PREVIEW ONLY — nothing sent. Show this to the user …"}],
+  "structuredContent":{"preview":true,"understood":["mornings (08:00–12:00)","not fri"],
+                       "slots":[{"start":"2026-11-04T18:00:00.000Z", …}], "email":{…}},
+  "isError":false}}</pre>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="label">The 8 tools</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tool</th><th>Changes anything?</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td><code>list_applications</code></td><td>No</td><td>Turn "Leo" into an application ID</td></tr>
+          <tr><td><code>list_interviews</code></td><td>No</td><td>Find "my interview with Ben"</td></tr>
+          <tr><td><code>get_interview_types</code></td><td>No</td><td>Durations and who attends</td></tr>
+          <tr><td><code>find_interview_slots</code></td><td>No</td><td>Free times, with preferences in plain words</td></tr>
+          <tr><td><code>send_scheduling_link</code></td><td>Yes, after confirm</td><td>Email the candidate a booking link</td></tr>
+          <tr><td><code>book_interview</code></td><td>Yes, after confirm</td><td>Book a time already agreed</td></tr>
+          <tr><td><code>reschedule_interview</code></td><td>Yes, after confirm</td><td>Move an interview, send new times</td></tr>
+          <tr><td><code>cancel_interview</code></td><td>Yes, after confirm</td><td>Cancel for everyone</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="section">
+      <div class="label">Before production</div>
+      <ol class="steps">
+        <li>Replace personal tokens with OAuth 2.1 sign-in through the company's SSO, which is what the MCP spec and both directories expect.</li>
+        <li>Host the server on a real HTTPS domain instead of a tunnel, and remove the <code>?token=</code> shortcut.</li>
+        <li>Add ChatGPT in-chat cards (Apps SDK components) on top of the <code>structuredContent</code> the tools already return.</li>
+      </ol>
+    </section>
+  </main>
+</body>
+</html>

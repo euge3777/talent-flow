@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TalentFlow Scheduling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="#/pipeline">TalentFlow<span>Interview scheduling</span></a>
+    <nav class="pill-nav" id="tabs" aria-label="Sections">
+      <a href="#/pipeline" data-view="pipeline">Pipeline</a>
+      <a href="#/interviews" data-view="interviews">Interviews</a>
+      <a href="#/availability" data-view="availability">Availability</a>
+      <a href="#/inbox" data-view="inbox">Inbox <span class="count" id="inbox-count" hidden></span></a>
+      <a href="#/dashboard" data-view="dashboard">Insights</a>
+      <a href="#/audit" data-view="audit">Activity</a>
+      <a href="#/connect" data-view="connect">AI assistants</a>
+    </nav>
+    <div class="tools">
+      <details class="clock-menu">
+        <summary class="chip" title="Demo clock: move time forward"><span class="lbl">Demo</span> <strong id="clock">…</strong></summary>
+        <div class="clock-pop">
+          <p>Move time forward to see reminders, link expiry and no-show prompts fire.</p>
+          <div class="row"><button data-advance="60">+1 hour</button><button data-advance="1440">+1 day</button></div>
+          <div class="row"><button class="quiet" id="clock-reset">Back to real time</button><button class="quiet danger" id="demo-reset">Reset demo data</button></div>
+        </div>
+      </details>
+      <label class="chip who" title="Switch who you are acting as"><span class="avatar" id="avatar"></span><select id="acting" aria-label="Acting as"></select></label>
+    </div>
+  </header>
+  <main id="view"></main>
+  <div id="modal-root"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
